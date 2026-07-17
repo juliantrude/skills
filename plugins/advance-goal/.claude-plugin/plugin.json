@@ -1,0 +1,6 @@
+{
+  "name": "advance-goal",
+  "version": "0.1.0",
+  "description": "Cross-session goal loop for Claude Code: one increment per headless run, self-scheduling restarts around subscription limits, web monitor, GOAL.md interview",
+  "author": { "name": "Julian Trude" }
+}
