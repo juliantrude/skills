@@ -109,3 +109,9 @@ successor; all state is in `GOAL.md`, so killed or missed runs are harmless.
 streams), `## Definition of Done`, `## Working Agreements` (rules the agent
 re-reads every run), `## Status` (`STATUS:` flag + `**Next action:**`),
 `## Budget` (threshold overrides), `## Log` (one line per iteration).
+
+## Credits
+
+The relentless-interview ("grilling") method that `/grill-goal` uses to turn a
+fuzzy goal into a precise GOAL.md is adapted from the grilling skill by
+[Matt Pocock](https://github.com/mattpocock).
