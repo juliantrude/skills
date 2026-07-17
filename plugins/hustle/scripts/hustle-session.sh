@@ -47,11 +47,20 @@ echo $$ > "$HUSTLE_HOME/run.pid"
 "$BIN/hustle-scheduler.sh" disarm >/dev/null 2>&1 || true
 
 # --- 3. ensure the monitor is running ---------------------------------------
-mpid="$(cat "$HUSTLE_HOME/monitor.pid" 2>/dev/null || true)"
-if [ -z "$mpid" ] || ! kill -0 "$mpid" 2>/dev/null; then
-  nohup python3 "$BIN/hustle-monitor.py" >> "$HUSTLE_HOME/monitor.log" 2>&1 &
-  echo $! > "$HUSTLE_HOME/monitor.pid"
-  log "[monitor] started (pid $!)"
+# Linux: the monitor MUST run as its own systemd unit. A nohup'ed child of this
+# script lives in the oneshot service's cgroup and gets killed the moment the
+# run ends (KillMode=control-group) — it would only ever live during a run.
+# macOS: no cgroups; a detached nohup daemon survives fine.
+if [ "$(uname -s)" != "Darwin" ] && command -v systemctl >/dev/null 2>&1; then
+  systemctl --user start "hustle-monitor-${HUSTLE_SLUG}.service" 2>/dev/null \
+    || log "[monitor] could not start hustle-monitor-${HUSTLE_SLUG}.service"
+else
+  mpid="$(cat "$HUSTLE_HOME/monitor.pid" 2>/dev/null || true)"
+  if [ -z "$mpid" ] || ! kill -0 "$mpid" 2>/dev/null; then
+    nohup python3 "$BIN/hustle-monitor.py" >> "$HUSTLE_HOME/monitor.log" 2>&1 &
+    echo $! > "$HUSTLE_HOME/monitor.pid"
+    log "[monitor] started (pid $!)"
+  fi
 fi
 
 cd "$HUSTLE_PROJECT" || { log "[error] cd $HUSTLE_PROJECT failed"; exit 1; }

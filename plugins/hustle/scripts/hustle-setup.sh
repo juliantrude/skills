@@ -46,10 +46,26 @@ fi
 if [ "$OS" != "Darwin" ]; then
   UNIT_DIR="$HOME/.config/systemd/user"
   mkdir -p "$UNIT_DIR"
+  # The monitor gets its OWN unit: anything nohup'ed from inside the oneshot
+  # run would live in the oneshot's cgroup and be killed when the run ends
+  # (KillMode=control-group). Wants= pulls it up with every run instead.
+  cat > "$UNIT_DIR/hustle-monitor-${SLUG}.service" <<EOF
+[Unit]
+Description=hustle monitor dashboard for ${SLUG}
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/env python3 $HUSTLE_HOME/bin/hustle-monitor.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
+EOF
   cat > "$UNIT_DIR/hustle-${SLUG}.service" <<EOF
 [Unit]
 Description=advance-goal run for ${SLUG}
-Wants=network-online.target
+Wants=network-online.target hustle-monitor-${SLUG}.service
 After=network-online.target
 
 [Service]
@@ -58,7 +74,7 @@ ExecStart=$HUSTLE_HOME/bin/hustle-session.sh
 TimeoutStartSec=7200
 EOF
   systemctl --user daemon-reload
-  echo "wrote systemd unit hustle-${SLUG}.service"
+  echo "wrote systemd units hustle-${SLUG}.service + hustle-monitor-${SLUG}.service"
 fi
 
 # Smoke-test the scheduler round trip (arm in the future, read back, disarm).
