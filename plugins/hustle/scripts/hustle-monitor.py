@@ -177,21 +177,21 @@ def compute_state() -> dict:
     phase = st.get("phase", "unknown")
 
     if running:
-        headline, tone = "Arbeitet gerade", "run"
+        headline, tone = "Working", "run"
     elif phase == "complete":
-        headline, tone = "Ziel erreicht", "done"
+        headline, tone = "Goal reached", "done"
     elif phase == "on_hold":
-        headline, tone = "Pausiert – Session-Limit", "hold"
+        headline, tone = "Paused – session limit", "hold"
     elif phase == "blocked":
-        headline, tone = "Blockiert (letztes Inkrement)", "warn"
+        headline, tone = "Blocked (last increment)", "warn"
     elif phase == "not_ready":
-        headline, tone = "GOAL.md noch nicht befüllt", "warn"
+        headline, tone = "GOAL.md not filled in yet", "warn"
     elif armed:
-        headline, tone = "Wartet auf nächsten Lauf", "wait"
+        headline, tone = "Waiting for next run", "wait"
     elif phase == "unknown":
-        headline, tone = "Noch kein Lauf", "idle"
+        headline, tone = "No runs yet", "idle"
     else:
-        headline, tone = "Keine Kette geplant (gestoppt?)", "warn"
+        headline, tone = "No chain scheduled (stopped?)", "warn"
 
     return {
         "headline": headline,
@@ -209,7 +209,7 @@ def compute_state() -> dict:
     }
 
 
-PAGE = """<!doctype html><html lang="de"><head><meta charset="utf-8">
+PAGE = """<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>hustle monitor</title>
 <style>
@@ -260,7 +260,7 @@ PAGE = """<!doctype html><html lang="de"><head><meta charset="utf-8">
  <h1>hustle monitor</h1>
  <div><span id="badge" class="badge idle">…</span><span id="stflag" class="pill"></span></div>
  <div class="next-action" id="na" style="display:none">
-   <div class="k">Als Nächstes dran</div><div id="naText"></div>
+   <div class="k">Up next</div><div id="naText"></div>
  </div>
  <div class="grid" id="grid"></div>
 
@@ -278,7 +278,7 @@ PAGE = """<!doctype html><html lang="de"><head><meta charset="utf-8">
   </div>
  </div>
 
- <h2>Iterations-Historie (GOAL.md)</h2>
+ <h2>Iteration history (GOAL.md)</h2>
  <div class="goal-log" id="goalLog"></div>
  <h2>Log</h2>
  <pre id="log">…</pre>
@@ -303,12 +303,12 @@ async function refresh(){
 
   const planPct=g.plan_total?Math.round(100*g.plan_done/g.plan_total):0;
   const cards=[
-   ['Plan-Fortschritt', g.plan_done+' / '+g.plan_total+bar(planPct,'ok')],
-   ['Session-Budget', (s.session_pct!==''?esc(s.session_pct)+'%':'–')+bar(s.session_pct)],
-   ['Wochen-Budget', (s.week_pct!==''?esc(s.week_pct)+'%':'–')+bar(s.week_pct)],
-   ['Nächster Lauf', esc(s.next_run||'– keiner geplant –')],
-   ['Blocker', md(g.blockers||'–')],
-   ['Letzter Hinweis', esc(s.note||'–')],
+   ['Plan progress', g.plan_done+' / '+g.plan_total+bar(planPct,'ok')],
+   ['Session budget', (s.session_pct!==''?esc(s.session_pct)+'%':'–')+bar(s.session_pct)],
+   ['Weekly budget', (s.week_pct!==''?esc(s.week_pct)+'%':'–')+bar(s.week_pct)],
+   ['Next run', esc(s.next_run||'– none scheduled –')],
+   ['Blockers', md(g.blockers||'–')],
+   ['Last note', esc(s.note||'–')],
   ];
   document.getElementById('grid').innerHTML=cards.map(
    ([k,v])=>`<div class="card"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
@@ -336,11 +336,11 @@ async function refresh(){
   }).join('');
 
   document.getElementById('goalLog').innerHTML=(g.goal_log||[]).slice().reverse().map(
-   l=>`<div>${md(l)}</div>`).join('')||'<div class="muted">noch keine Iterationen</div>';
+   l=>`<div>${md(l)}</div>`).join('')||'<div class="muted">no iterations yet</div>';
   document.getElementById('log').textContent=await (await fetch('api/log')).text();
   document.getElementById('foot').textContent=
-   'Status aktualisiert: '+(s.updated||'nie')+' · Server: '+s.server_time;
- }catch(e){document.getElementById('badge').textContent='Monitor nicht erreichbar';}
+   'Status updated: '+(s.updated||'never')+' · Server: '+s.server_time;
+ }catch(e){document.getElementById('badge').textContent='Monitor unreachable';}
 }
 refresh(); setInterval(refresh, 5000);
 </script></body></html>"""

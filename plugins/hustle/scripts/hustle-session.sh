@@ -97,7 +97,7 @@ EOF
 }
 
 # --- 6a. goal finished -> stop the chain ------------------------------------
-if grep -q 'STATUS: COMPLETE' "$HUSTLE_PROJECT/GOAL.md" 2>/dev/null; then
+if grep -qE '^STATUS: *COMPLETE' "$HUSTLE_PROJECT/GOAL.md" 2>/dev/null; then
   log "[done] GOAL complete — chain stops"
   write_status "complete" "goal reached"
   exit 0
