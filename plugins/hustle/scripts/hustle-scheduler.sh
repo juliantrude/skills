@@ -4,26 +4,26 @@
 #   up missed fires via Persistent=true).
 # macOS backend: a launchd LaunchAgent plist with StartCalendarInterval
 #   (fires missed times after sleep/wake; runs missed while powered off are
-#   lost — the safety net in ag-session.sh re-arms on the next manual start).
+#   lost — the safety net in hustle-session.sh re-arms on the next manual start).
 #
 # Usage:
-#   ag-scheduler.sh arm --in <seconds>
-#   ag-scheduler.sh arm --at "YYYY-MM-DD HH:MM[:SS]"
-#   ag-scheduler.sh disarm          # remove the pending one-shot (idempotent)
-#   ag-scheduler.sh next            # print next fire time, or nothing if none
+#   hustle-scheduler.sh arm --in <seconds>
+#   hustle-scheduler.sh arm --at "YYYY-MM-DD HH:MM[:SS]"
+#   hustle-scheduler.sh disarm          # remove the pending one-shot (idempotent)
+#   hustle-scheduler.sh next            # print next fire time, or nothing if none
 #
 # All date math goes through python3 (GNU `date -d` doesn't exist on macOS).
 set -uo pipefail
 
-AG_HOME="$(cd "$(dirname "$0")/.." && pwd)"
+HUSTLE_HOME="$(cd "$(dirname "$0")/.." && pwd)"
 # shellcheck disable=SC1091
-source "$AG_HOME/config"
+source "$HUSTLE_HOME/config"
 
 OS="$(uname -s)"
 UNIT_DIR="${HOME}/.config/systemd/user"
-SERVICE="ag-${AG_SLUG}.service"
-TIMER="ag-${AG_SLUG}-next.timer"
-LABEL="com.advance-goal.${AG_SLUG}.next"
+SERVICE="hustle-${HUSTLE_SLUG}.service"
+TIMER="hustle-${HUSTLE_SLUG}-next.timer"
+LABEL="com.hustle.${HUSTLE_SLUG}.next"
 PLIST="${HOME}/Library/LaunchAgents/${LABEL}.plist"
 
 ts_normalize() { # --in N | --at "ts"  ->  "YYYY-MM-DD HH:MM:SS" (local), or fail
@@ -52,7 +52,7 @@ arm_linux() {
   mkdir -p "$UNIT_DIR"
   cat > "${UNIT_DIR}/${TIMER}" <<EOF
 [Unit]
-Description=One-shot restart of advance-goal (${AG_SLUG}), armed $(date)
+Description=One-shot restart of advance-goal (${HUSTLE_SLUG}), armed $(date)
 
 [Timer]
 Unit=${SERVICE}
@@ -78,7 +78,7 @@ EOF
 arm_darwin() {
   local when="$1"
   mkdir -p "${HOME}/Library/LaunchAgents"
-  python3 - "$PLIST" "$LABEL" "$AG_HOME/bin/ag-session.sh" "$when" <<'PY'
+  python3 - "$PLIST" "$LABEL" "$HUSTLE_HOME/bin/hustle-session.sh" "$when" <<'PY'
 import sys, plistlib, datetime
 plist, label, session, when = sys.argv[1:5]
 t = datetime.datetime.strptime(when, "%Y-%m-%d %H:%M:%S")

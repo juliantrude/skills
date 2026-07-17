@@ -15,20 +15,20 @@ output, and handle failures.
 1. Locate the plugin root (two directories up from this SKILL.md) and run:
 
    ```bash
-   bash <plugin-root>/scripts/ag-setup.sh <project-dir>
+   bash <plugin-root>/scripts/hustle-setup.sh <project-dir>
    ```
 
    with `<project-dir>` = the project the user wants the loop in (default:
    current working directory — confirm with the user if ambiguous).
 
 2. The installer will:
-   - create `<project>/.advance-goal/` with `bin/` (runtime scripts), a
+   - create `<project>/.hustle/` with `bin/` (runtime scripts), a
      `config` file (kept if it already exists) and a `.gitignore`,
-   - on Linux: write the `ag-<slug>.service` systemd user unit,
+   - on Linux: write the `hustle-<slug>.service` systemd user unit,
    - smoke-test the scheduler (arm → read back → disarm) and fail loudly if
      the platform backend doesn't work.
 
-3. If the smoke test fails, debug the platform backend (`ag-scheduler.sh`):
+3. If the smoke test fails, debug the platform backend (`hustle-scheduler.sh`):
    Linux → systemd user session issues (`systemctl --user` reachable?);
    macOS → launchd bootstrap (`launchctl print gui/$(id -u)` reachable?).
 
@@ -39,7 +39,7 @@ output, and handle failures.
 
 5. Mention the two standing caveats:
    - **Unattended permissions:** the config defaults to
-     `AG_SKIP_PERMISSIONS="true"` — the loop commits/pushes autonomously.
+     `HUSTLE_SKIP_PERMISSIONS="true"` — the loop commits/pushes autonomously.
      Point the user at the README's security section; they can set it to
      `false` and maintain an allowlist instead if they want a tighter leash.
    - **Boot persistence:** Linux needs `loginctl enable-linger $USER` for the

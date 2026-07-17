@@ -1,0 +1,6 @@
+{
+  "name": "hustle",
+  "version": "0.2.0",
+  "description": "Cross-session goal loop for Claude Code: /hustle orchestrates planning (grilling interview -> GOAL.md), setup and ignition of a self-scheduling chain that works one verified increment per headless run, parking at subscription limits and resuming on reset. Includes a zero-token web monitor.",
+  "author": { "name": "Julian Trude" }
+}

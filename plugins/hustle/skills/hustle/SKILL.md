@@ -1,0 +1,65 @@
+---
+name: hustle
+description: Top-level entry point for the hustle loop — orchestrates everything from zero to a running cross-session goal chain in the current project. Use when the user wants to start hustling on a long-running goal, says "/hustle", "set up the loop here", or wants Claude to keep working on something across sessions.
+---
+
+# hustle — from zero to a running goal chain
+
+You orchestrate the full lifecycle. Walk these phases **in order**, skipping
+any phase that is already satisfied. Tell the user which phase you're in.
+
+## Phase 1 — Install (skip if `<project>/.hustle/` exists)
+
+Follow the `/loop-setup` skill: run `scripts/hustle-setup.sh <project-dir>`
+from this plugin's root. It creates `.hustle/` (runtime scripts + config), the
+platform scheduling (systemd unit on Linux), and smoke-tests the scheduler.
+If the smoke test fails, stop and debug before going further — a broken
+scheduler means a chain that silently dies.
+
+## Phase 2 — Plan (skip if GOAL.md exists and is `STATUS: READY` or beyond)
+
+Follow the `/grill-goal` skill: explore the project first, then grill the user
+one question at a time (recommended answer included) until North star,
+Definition of Done, Working Agreements, and a dependency-ordered increment
+plan are nailed down. Output: a loop-ready `GOAL.md`, `STATUS: READY`.
+
+If a GOAL.md exists but looks half-finished (unfilled placeholders, empty
+plan), treat it as input to the interview, not as ready.
+
+## Phase 3 — Pre-flight check (never skip)
+
+Confirm with the user before igniting — this is the last human checkpoint
+before an unattended agent starts committing and pushing on its own:
+
+1. Show a 3-line summary: the north star, the first increment it will tackle,
+   and the configured model/effort from `.hustle/config`.
+2. Point out the permission mode (`HUSTLE_SKIP_PERMISSIONS` in the config) and
+   what it means.
+3. On Linux: check `loginctl show-user $USER --property=Linger`; if linger is
+   off, tell the user the chain dies at logout and give them the
+   `loginctl enable-linger $USER` command.
+4. Ask explicitly: start now?
+
+## Phase 4 — Ignite
+
+- Linux: `systemctl --user start hustle-<slug>.service`
+- macOS: `nohup .hustle/bin/hustle-session.sh >/dev/null 2>&1 &`
+
+(`<slug>` is `HUSTLE_SLUG` from `.hustle/config`.)
+
+Then verify ignition instead of assuming it:
+- within ~30s the run should be visible (Linux: `systemctl --user is-active
+  hustle-<slug>.service` = `activating`; both platforms: `.hustle/run.pid`
+  exists and the pid is alive),
+- the monitor should answer on `http://localhost:<HUSTLE_PORT>/api/status`.
+
+Report to the user: monitor URL (with the machine's LAN address if
+determinable), how the pacing works (one increment → ~2 min gap → next run;
+parks at session/week limits and resumes on reset), and the kill switch
+(`.hustle/bin/hustle-scheduler.sh disarm`).
+
+## If the user asks for status instead of setup
+
+Don't re-run phases — read `GOAL.md` + `.hustle/status.json`, check whether a
+run is active (`run.pid`) and what's armed (`hustle-scheduler.sh next`), and
+summarize. Point at the monitor URL for the live view.

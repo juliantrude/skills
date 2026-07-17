@@ -2,13 +2,13 @@
 """Tiny stdlib-only monitoring dashboard for the advance-goal loop.
 
 Portable: no systemd dependency — "running" comes from the run.pid file,
-"next fire" from ag-scheduler.sh (which speaks systemd on Linux and launchd
+"next fire" from hustle-scheduler.sh (which speaks systemd on Linux and launchd
 on macOS). Zero tokens at runtime: everything is local file parsing.
 
-Layout (AG_HOME = <project>/.advance-goal):
-  config       KEY=VALUE settings (AG_PROJECT, AG_PORT, AG_BIND, ...)
-  bin/         this script + ag-scheduler.sh + ag-session.sh
-  status.json  written by ag-session.sh after each run
+Layout (HUSTLE_HOME = <project>/.hustle):
+  config       KEY=VALUE settings (HUSTLE_PROJECT, HUSTLE_PORT, HUSTLE_BIND, ...)
+  bin/         this script + hustle-scheduler.sh + hustle-session.sh
+  status.json  written by hustle-session.sh after each run
   run.log      chain log
   run.pid      pid of the active run (if any)
 """
@@ -20,13 +20,13 @@ from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-AG_HOME = Path(os.environ.get("AG_HOME", Path(__file__).resolve().parents[1]))
+HUSTLE_HOME = Path(os.environ.get("HUSTLE_HOME", Path(__file__).resolve().parents[1]))
 
 
 def read_config() -> dict:
     cfg = {}
     try:
-        for ln in (AG_HOME / "config").read_text().splitlines():
+        for ln in (HUSTLE_HOME / "config").read_text().splitlines():
             ln = ln.strip()
             if ln and not ln.startswith("#") and "=" in ln:
                 k, v = ln.split("=", 1)
@@ -37,13 +37,13 @@ def read_config() -> dict:
 
 
 CFG = read_config()
-PROJECT = Path(CFG.get("AG_PROJECT", AG_HOME.parent))
-PORT = int(os.environ.get("AG_PORT", CFG.get("AG_PORT", "8787")))
-BIND = os.environ.get("AG_BIND", CFG.get("AG_BIND", "0.0.0.0"))
-LOGLINES = int(CFG.get("AG_LOGLINES", "60"))
+PROJECT = Path(CFG.get("HUSTLE_PROJECT", HUSTLE_HOME.parent))
+PORT = int(os.environ.get("HUSTLE_PORT", CFG.get("HUSTLE_PORT", "8787")))
+BIND = os.environ.get("HUSTLE_BIND", CFG.get("HUSTLE_BIND", "0.0.0.0"))
+LOGLINES = int(CFG.get("HUSTLE_LOGLINES", "60"))
 
-STATUS_JSON = AG_HOME / "status.json"
-LOG_FILE = AG_HOME / "run.log"
+STATUS_JSON = HUSTLE_HOME / "status.json"
+LOG_FILE = HUSTLE_HOME / "run.log"
 GOAL_FILE = PROJECT / "GOAL.md"
 
 CHECKBOX = re.compile(r"^\s*-\s*\[( |x|X)\]\s+(.*)$")
@@ -51,7 +51,7 @@ CHECKBOX = re.compile(r"^\s*-\s*\[( |x|X)\]\s+(.*)$")
 
 def run_active() -> bool:
     try:
-        pid = int((AG_HOME / "run.pid").read_text().strip())
+        pid = int((HUSTLE_HOME / "run.pid").read_text().strip())
         os.kill(pid, 0)
         return True
     except Exception:
@@ -61,7 +61,7 @@ def run_active() -> bool:
 def armed_next() -> str:
     try:
         out = subprocess.run(
-            ["bash", str(AG_HOME / "bin" / "ag-scheduler.sh"), "next"],
+            ["bash", str(HUSTLE_HOME / "bin" / "hustle-scheduler.sh"), "next"],
             capture_output=True, text=True, timeout=10,
         ).stdout.strip()
         return out
@@ -211,7 +211,7 @@ def compute_state() -> dict:
 
 PAGE = """<!doctype html><html lang="de"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>advance-goal monitor</title>
+<title>hustle monitor</title>
 <style>
  :root{color-scheme:dark}
  body{font:15px/1.5 system-ui,sans-serif;margin:0;background:#0f1115;color:#e6e6e6}
@@ -257,7 +257,7 @@ PAGE = """<!doctype html><html lang="de"><head><meta charset="utf-8">
  .muted{color:#6b7688;font-size:12px}
  .goal-log div{font-size:13px;color:#9fb0c8;padding:3px 0;border-bottom:1px dashed #1e2430}
 </style></head><body><div class="wrap">
- <h1>advance-goal monitor</h1>
+ <h1>hustle monitor</h1>
  <div><span id="badge" class="badge idle">…</span><span id="stflag" class="pill"></span></div>
  <div class="next-action" id="na" style="display:none">
    <div class="k">Als Nächstes dran</div><div id="naText"></div>
@@ -374,5 +374,5 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     srv = ThreadingHTTPServer((BIND, PORT), Handler)
-    print(f"advance-goal monitor on http://{BIND}:{PORT}  (project: {PROJECT})", flush=True)
+    print(f"hustle monitor on http://{BIND}:{PORT}  (project: {PROJECT})", flush=True)
     srv.serve_forever()

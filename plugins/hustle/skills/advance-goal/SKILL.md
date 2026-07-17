@@ -1,6 +1,6 @@
 ---
 name: advance-goal
-description: Advance one increment of a long-running, multi-session goal defined in GOAL.md, then self-check the subscription budget via /usage and schedule the next run. Designed to be driven by the headless one-shot chain (ag-session.sh) or by `/loop /advance-goal` so it keeps working across session-limit resets.
+description: Advance one increment of a long-running, multi-session goal defined in GOAL.md, then self-check the subscription budget via /usage and schedule the next run. Designed to be driven by the headless one-shot chain (hustle-session.sh) or by `/loop /advance-goal` so it keeps working across session-limit resets.
 ---
 
 # advance-goal — one iteration of a cross-session goal loop
@@ -65,20 +65,20 @@ Current week (Sonnet): 3% used · resets Jul 18, 11pm (Europe/Berlin)
 **Two carrier modes — detect which one you're in:**
 
 - **Headless one-shot chain** (invoked via `claude -p "/advance-goal"` from
-  `.advance-goal/bin/ag-session.sh`): each run is independent and short-lived,
+  `.hustle/bin/hustle-session.sh`): each run is independent and short-lived,
   and **you are responsible for arming the next run before you exit**. There is
   no persistent process and `ScheduleWakeup` does nothing here. Arm via the
   scheduler (path relative to the project root, which is your cwd):
 
   ```bash
-  .advance-goal/bin/ag-scheduler.sh arm --in 120                    # budget healthy → continue soon
-  .advance-goal/bin/ag-scheduler.sh arm --at "2026-07-15 22:02:00"  # exhausted → restart just after reset
+  .hustle/bin/hustle-scheduler.sh arm --in 120                    # budget healthy → continue soon
+  .hustle/bin/hustle-scheduler.sh arm --at "2026-07-15 22:02:00"  # exhausted → restart just after reset
   ```
 
   Convert the `/usage` "resets …" time to a `YYYY-MM-DD HH:MM:SS` timestamp and
   add ~2 minutes of buffer so you're safely past the reset. If the goal is
   COMPLETE, do **not** arm anything — write `STATUS: COMPLETE` in GOAL.md and
-  the chain stops. (A safety net in ag-session.sh re-arms a fallback if you
+  the chain stops. (A safety net in hustle-session.sh re-arms a fallback if you
   ever forget, but arm it explicitly.)
 
   The scheduler **fails loudly** (non-zero exit) if the timer couldn't be armed

@@ -35,9 +35,9 @@ The interview's job is to remove those guesses **before** the chain starts.
    refuses to start otherwise).
 4. **Review pass:** show the user the draft, grill once more over anything that
    still smells vague, then set `STATUS: READY` and remind them how to start
-   the chain: Linux `systemctl --user start ag-<slug>.service`, macOS
-   `.advance-goal/bin/ag-session.sh &`, or interactively `/loop /advance-goal`.
-   (If `.advance-goal/` doesn't exist yet, point them at `/loop-setup` first.)
+   the chain: Linux `systemctl --user start hustle-<slug>.service`, macOS
+   `.hustle/bin/hustle-session.sh &`, or interactively `/loop /advance-goal`.
+   (If `.hustle/` doesn't exist yet, point them at `/loop-setup` first.)
 
 ## Interview branches (in order)
 

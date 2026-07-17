@@ -3,9 +3,9 @@
   "owner": { "name": "Julian Trude" },
   "plugins": [
     {
-      "name": "advance-goal",
-      "source": "./plugins/advance-goal",
-      "description": "Cross-session goal loop: Claude works towards a GOAL.md over many sessions via self-scheduling one-shot runs (systemd/launchd), with a zero-token web monitor and a grilling interview to build the GOAL.md"
+      "name": "hustle",
+      "source": "./plugins/hustle",
+      "description": "Cross-session goal loop: /hustle takes a project from zero (grilling interview -> GOAL.md) to a running self-scheduling chain that hustles on the goal day and night, around subscription limits, with a zero-token web monitor"
     }
   ]
 }

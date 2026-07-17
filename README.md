@@ -1,10 +1,11 @@
-# advance-goal — a cross-session goal loop for Claude Code
+# hustle — a cross-session goal loop for Claude Code
 
-Claude Code works toward a long-term goal **across many sessions**: one small,
-verified increment per headless run, self-scheduling the next run — including
-parking itself until your subscription's session/week limit resets and resuming
-automatically. Progress lives in a human-readable `GOAL.md`; a zero-token web
-dashboard shows what's done, what's next, and how far the Definition of Done is.
+Claude Code hustles toward a long-term goal **across many sessions**: one
+small, verified increment per headless run, self-scheduling the next run —
+including parking itself until your subscription's session/week limit resets
+and resuming automatically. Progress lives in a human-readable `GOAL.md`; a
+zero-token web dashboard shows what's done, what's next, and how far the
+Definition of Done is.
 
 Works on **Linux** (systemd user timers) and **macOS** (launchd; beta — see
 caveats). Runs on a regular Claude subscription; no API key needed.
@@ -13,29 +14,42 @@ caveats). Runs on a regular Claude subscription; no API key needed.
 GOAL.md  ←→  /advance-goal (skill, 1 increment per run)
                  │  arms one-shot timer (systemd/launchd)
                  ▼
-        .advance-goal/bin/ag-session.sh   ← fired by the timer, self-deleting
+        .hustle/bin/hustle-session.sh   ← fired by the timer, self-deleting
                  │
-                 ├── ag-scheduler.sh   platform-abstract one-shot scheduling
-                 └── ag-monitor.py     web dashboard on :8787 (zero tokens)
+                 ├── hustle-scheduler.sh   platform-abstract one-shot scheduling
+                 └── hustle-monitor.py     web dashboard on :8787 (zero tokens)
 ```
 
 ## Install
 
 ```
-/plugin marketplace add https://gitlab.com/trude/advance-goal-plugin.git
-/plugin install advance-goal@trude-claude
+/plugin marketplace add https://gitlab.com/trude/skills.git
+/plugin install hustle@trude-claude
 ```
 
-Then, in the project you want the loop in:
+## Use
 
-| Step | Command | What it does |
-|---|---|---|
-| 1 | `/loop-setup` | installs `.advance-goal/` + platform scheduling into the project |
-| 2 | `/grill-goal` | relentless interview that produces a loop-ready `GOAL.md` |
-| 3 | Linux: `systemctl --user start ag-<slug>.service`<br>macOS: `.advance-goal/bin/ag-session.sh &` | kicks off the chain |
-| — | `http://<host>:8787` | watch it work |
+One command, in the project you want the loop in:
 
-Kill switch: `.advance-goal/bin/ag-scheduler.sh disarm` (stops the chain after
+```
+/hustle
+```
+
+It orchestrates everything: installs `.hustle/` into the project (if missing),
+runs the **grilling interview** that turns your fuzzy goal into a loop-ready
+`GOAL.md` (if missing), does a pre-flight check, and ignites the chain. Then
+watch it work at `http://<host>:8787`.
+
+The pieces are also available individually:
+
+| Skill | Purpose |
+|---|---|
+| `/hustle` | top-level orchestrator: install → plan → pre-flight → ignite |
+| `/grill-goal` | just the interview that builds/sharpens `GOAL.md` |
+| `/loop-setup` | just the per-project installation |
+| `/advance-goal` | the runtime skill the chain calls each run (also usable interactively via `/loop /advance-goal`) |
+
+Kill switch: `.hustle/bin/hustle-scheduler.sh disarm` (stops the chain after
 the current run; a running run finishes).
 
 ## How it paces itself
@@ -55,21 +69,21 @@ successor; all state is in `GOAL.md`, so killed or missed runs are harmless.
 ## ⚠️ Security — read this once
 
 - By default the loop runs with `--dangerously-skip-permissions`
-  (`AG_SKIP_PERMISSIONS="true"` in `.advance-goal/config`): an **unattended
+  (`HUSTLE_SKIP_PERMISSIONS="true"` in `.hustle/config`): an **unattended
   agent with full tool access** that will edit, commit, push, and talk to your
   issue tracker on its own. Only point it at projects where you accept that,
   and write the boundaries into `GOAL.md` (the `/grill-goal` interview asks).
 - The monitor binds to `0.0.0.0:8787` with **no auth** — anyone on your LAN can
-  read the dashboard including log excerpts. Set `AG_BIND="127.0.0.1"` in
-  `.advance-goal/config` if that's not what you want.
+  read the dashboard including log excerpts. Set `HUSTLE_BIND="127.0.0.1"` in
+  `.hustle/config` if that's not what you want.
 
-## Configuration (`.advance-goal/config`)
+## Configuration (`.hustle/config`)
 
 | Key | Default | Meaning |
 |---|---|---|
-| `AG_MODEL` / `AG_EFFORT` | `sonnet` / `high` | model + effort for headless runs |
-| `AG_SKIP_PERMISSIONS` | `true` | `false` = headless runs use default permission checks (will block on anything not allowlisted) |
-| `AG_PORT` / `AG_BIND` | `8787` / `0.0.0.0` | monitor listen address |
+| `HUSTLE_MODEL` / `HUSTLE_EFFORT` | `sonnet` / `high` | model + effort for headless runs |
+| `HUSTLE_SKIP_PERMISSIONS` | `true` | `false` = headless runs use default permission checks (will block on anything not allowlisted) |
+| `HUSTLE_PORT` / `HUSTLE_BIND` | `8787` / `0.0.0.0` | monitor listen address |
 
 ## Platform caveats
 
@@ -77,8 +91,8 @@ successor; all state is in `GOAL.md`, so killed or missed runs are harmless.
   logout. Reboots are fine (`Persistent=true` catches up missed fires).
 - **macOS (beta):** scheduling via launchd `StartCalendarInterval`. Fires
   missed during **sleep** are delivered on wake; fires missed while **powered
-  off** are lost — restart the chain manually (`ag-session.sh &`). The launchd
-  backend has not had wide testing yet; issues welcome.
+  off** are lost — restart the chain manually (`hustle-session.sh &`). The
+  launchd backend has not had wide testing yet; issues welcome.
 
 ## Anatomy of a run
 
