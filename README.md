@@ -23,7 +23,7 @@ GOAL.md  ←→  /advance-goal (skill, 1 increment per run)
 ## Install
 
 ```
-/plugin marketplace add https://gitlab.com/trude/skills.git
+/plugin marketplace add juliantrude/skills
 /plugin install hustle@trude-claude
 ```
 
