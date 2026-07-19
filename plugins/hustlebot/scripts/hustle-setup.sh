@@ -1,14 +1,27 @@
 #!/usr/bin/env bash
 # Install the hustle loop into a project.
 #
-#   hustle-setup.sh [project-dir]     (default: current directory)
+#   hustle-setup.sh [--dev] [project-dir]     (default: current directory)
 #
 # Creates <project>/.hustle/ with the runtime scripts, a config file and
 # (on Linux) the systemd user service. Idempotent: re-running refreshes the
 # scripts but leaves an existing config untouched.
+#
+# --dev symlinks .hustle/bin/* at the plugin sources instead of copying them,
+# so edits to the scripts are visible on the running dashboard without
+# re-running setup.
 set -euo pipefail
 
-PROJECT="$(cd "${1:-$PWD}" && pwd)"
+DEV_MODE=false
+ARGS=()
+for arg in "$@"; do
+  case "$arg" in
+    --dev) DEV_MODE=true ;;
+    *) ARGS+=("$arg") ;;
+  esac
+done
+
+PROJECT="$(cd "${ARGS[0]:-$PWD}" && pwd)"
 PLUGIN_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 HUSTLE_HOME="$PROJECT/.hustle"
 SLUG="$(basename "$PROJECT" | tr -cs 'a-zA-Z0-9' '-' | sed 's/^-//;s/-$//')"
@@ -18,8 +31,16 @@ command -v python3 >/dev/null || { echo "error: python3 is required (macOS: xcod
 command -v claude  >/dev/null || { echo "error: claude CLI not found in PATH"; exit 1; }
 
 mkdir -p "$HUSTLE_HOME/bin"
-cp "$PLUGIN_DIR/scripts/hustle-scheduler.sh" "$PLUGIN_DIR/scripts/hustle-session.sh" \
-   "$PLUGIN_DIR/scripts/hustle-monitor.py" "$HUSTLE_HOME/bin/"
+rm -f "$HUSTLE_HOME/bin/hustle-scheduler.sh" "$HUSTLE_HOME/bin/hustle-session.sh" "$HUSTLE_HOME/bin/hustle-monitor.py"
+if [ "$DEV_MODE" = true ]; then
+  ln -s "$PLUGIN_DIR/scripts/hustle-scheduler.sh" "$HUSTLE_HOME/bin/hustle-scheduler.sh"
+  ln -s "$PLUGIN_DIR/scripts/hustle-session.sh" "$HUSTLE_HOME/bin/hustle-session.sh"
+  ln -s "$PLUGIN_DIR/scripts/hustle-monitor.py" "$HUSTLE_HOME/bin/hustle-monitor.py"
+  echo "dev mode: symlinked .hustle/bin/* at $PLUGIN_DIR/scripts"
+else
+  cp "$PLUGIN_DIR/scripts/hustle-scheduler.sh" "$PLUGIN_DIR/scripts/hustle-session.sh" \
+     "$PLUGIN_DIR/scripts/hustle-monitor.py" "$HUSTLE_HOME/bin/"
+fi
 chmod +x "$HUSTLE_HOME/bin/hustle-scheduler.sh" "$HUSTLE_HOME/bin/hustle-session.sh" "$HUSTLE_HOME/bin/hustle-monitor.py"
 
 # Runtime state never belongs in the project's VCS.
