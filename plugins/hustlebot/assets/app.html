@@ -1,0 +1,58 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>hustle monitor</title>
+<link rel="stylesheet" href="app.css">
+</head><body><div class="wrap">
+ <h1>hustle monitor</h1>
+ <nav class="nav" id="nav">
+  <a href="#/" data-route="/">Home</a>
+  <a href="#/plan" data-route="/plan">Plan</a>
+  <a href="#/logs" data-route="/logs">Logs</a>
+ </nav>
+
+ <section id="page-home">
+  <div class="home-top">
+   <div class="home-status">
+    <div><span id="badge" class="badge idle">…</span></div>
+    <div class="next-action" id="curTask">
+      <div class="k">Current task</div><div id="curTaskText"></div>
+    </div>
+    <div class="next-action alt" id="nextTask">
+      <div class="k">Next task</div><div id="nextTaskText"></div>
+    </div>
+   </div>
+   <img id="avatar" class="avatar" alt="" src="idle.svg">
+  </div>
+  <div class="grid" id="grid"></div>
+ </section>
+
+ <section id="page-plan">
+  <div class="grid" id="statusGrid"></div>
+
+  <div class="cols">
+   <div>
+    <h2>Definition of Done</h2>
+    <div class="donutwrap">
+      <div class="donut" id="donut"><div id="donutPct">–</div></div>
+      <ul class="check" id="dodList"></ul>
+    </div>
+   </div>
+   <div>
+    <h2>Plan <span class="muted" id="planTotal"></span></h2>
+    <div id="plan"></div>
+   </div>
+  </div>
+
+  <h2>Iteration history (GOAL.md)</h2>
+  <div class="goal-log" id="goalLog"></div>
+ </section>
+
+ <section id="page-logs">
+  <h2>Log</h2>
+  <pre id="log">…</pre>
+ </section>
+
+ <div class="muted" id="foot"></div>
+</div>
+<script src="app.js"></script>
+</body></html>

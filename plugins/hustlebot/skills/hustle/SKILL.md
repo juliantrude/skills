@@ -38,7 +38,29 @@ before an unattended agent starts committing and pushing on its own:
 3. On Linux: check `loginctl show-user $USER --property=Linger`; if linger is
    off, tell the user the chain dies at logout and give them the
    `loginctl enable-linger $USER` command.
-4. Ask explicitly: start now?
+4. Check for a peer chain — every chain on the machine draws on the same
+   subscription, so two at once burn the budget twice as fast and race each
+   other into the session limit:
+
+   ```bash
+   .hustle/bin/hustle-session.sh --check-peers   # 0 = clear, 3 = one is working
+   ```
+
+   On exit 3 the log names the project. **Do not ignite.** Tell the user which
+   chain is working and ask whether to stop it (`systemctl --user stop
+   hustle-<their-slug>.service` plus `hustle-scheduler.sh disarm` in that
+   project) or to wait. A finished peer needs no question — the check retires
+   its leftover monitor by itself.
+
+   Headless runs make the same check and simply park for 5 minutes; only here,
+   with a human present, is it worth asking.
+
+   The same check logs `[peer] stale unit …` for any chain whose project
+   directory is gone. Surface those to the user with the `hustle-setup.sh
+   --uninstall <path>` line from the log — but never run it for them
+   unasked: an unmounted disk is indistinguishable from a deleted project,
+   and the units may belong to work they still want.
+5. Ask explicitly: start now?
 
 ## Phase 4 — Ignite
 

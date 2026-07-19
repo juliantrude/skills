@@ -1,4 +1,6 @@
-# hustle — a cross-session goal loop for Claude Code
+# hustlebot — a cross-session goal loop for Claude Code
+
+<img src="plugins/hustlebot/assets/working.svg" alt="The hustlebot sits at a screen and types; code scrolls past and the cursor blinks." width="520">
 
 Claude Code hustles toward a long-term goal **across many sessions**: one
 small, verified increment per headless run, self-scheduling the next run —
@@ -25,9 +27,16 @@ GOAL.md  ←→  /advance-goal (skill, 1 increment per run)
 
 ## Install
 
+> **Renamed in 0.3.0:** the plugin was called `hustle` and is now `hustlebot`,
+> so the command is `/hustlebot:hustle` instead of `/hustle:hustle`. If you
+> installed the old one, run `/plugin uninstall hustle@trude-claude` and
+> install again below. **Nothing in your projects changes** — `.hustle/`, the
+> `HUSTLE_*` config keys and the `hustle-<slug>` services keep their names, so
+> running chains are unaffected and need no migration.
+
 ```
 /plugin marketplace add juliantrude/skills
-/plugin install hustle@trude-claude
+/plugin install hustlebot@trude-claude
 ```
 
 ## Use
@@ -35,7 +44,7 @@ GOAL.md  ←→  /advance-goal (skill, 1 increment per run)
 One command, in the project you want the loop in:
 
 ```
-/hustle
+/hustlebot:hustle
 ```
 
 It orchestrates everything: installs `.hustle/` into the project (if missing),
@@ -47,7 +56,7 @@ The pieces are also available individually:
 
 | Skill | Purpose |
 |---|---|
-| `/hustle` | top-level orchestrator: install → plan → pre-flight → ignite |
+| `/hustlebot:hustle` | top-level orchestrator: install → plan → pre-flight → ignite |
 | `/grill-goal` | just the interview that builds/sharpens `GOAL.md` |
 | `/loop-setup` | just the per-project installation |
 | `/advance-goal` | the runtime skill the chain calls each run (also usable interactively via `/loop /advance-goal`) |
@@ -65,6 +74,14 @@ Every run does one increment, then checks `claude -p "/usage"`:
 | session ≥ 85 % | park until the session reset (+2 min buffer) |
 | week ≥ 90 % | park until the weekly reset |
 | goal complete | stop — nothing scheduled |
+
+The dashboard puts a face on that table — the avatar shows the chain's state at
+a glance, so you can tell from across the room whether it is working, waiting,
+or parked at a limit:
+
+| <img src="plugins/hustlebot/assets/waiting.svg" width="230" alt="The bot lifts a mug of coffee."> | <img src="plugins/hustlebot/assets/sleeping.svg" width="230" alt="The bot sleeps in a hammock under a crescent moon, Zzz drifting up."> | <img src="plugins/hustlebot/assets/searching.svg" width="230" alt="The bot scans the horizon with binoculars, a question mark bobbing overhead."> |
+|:--:|:--:|:--:|
+| **waiting** — between runs | **sleeping** — parked at a limit | **searching** — monitor unreachable |
 
 A safety net re-arms a +15 min fallback if a run crashes before scheduling its
 successor; all state is in `GOAL.md`, so killed or missed runs are harmless.

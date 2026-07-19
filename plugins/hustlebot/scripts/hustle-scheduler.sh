@@ -64,8 +64,15 @@ Persistent=true
 WantedBy=timers.target
 EOF
   systemctl --user daemon-reload
-  if ! systemctl --user enable --now "$TIMER" >/dev/null 2>&1; then
+  # `enable --now` only starts a timer that is stopped. A timer that already
+  # fired stays "active" with no future elapse, so --now is a no-op and the
+  # OnCalendar we just wrote is silently ignored -- the chain then looks armed
+  # while nothing is scheduled. Restart unconditionally to load the new time.
+  if ! systemctl --user enable "$TIMER" >/dev/null 2>&1; then
     echo "error: failed to enable ${TIMER}" >&2; return 1
+  fi
+  if ! systemctl --user restart "$TIMER" >/dev/null 2>&1; then
+    echo "error: failed to restart ${TIMER}" >&2; return 1
   fi
   local next
   next="$(systemctl --user show "$TIMER" --property=NextElapseUSecRealtime --value 2>/dev/null)"

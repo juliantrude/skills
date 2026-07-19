@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     viewBox="0 0 240 150" width="480" height="300" role="img"
+           aria-label="Der Roboter liegt schlafend in einer Hängematte zwischen zwei Pfosten, die Antenne hängt herab und Zzz steigen auf.">
+<style>
+/* ---- motion --------------------------------------------------------- */
+  @keyframes breathe{from{transform:translateY(0)}to{transform:translateY(-2.5px)}}
+  @keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.08)}}
+  @keyframes typeL{0%,100%{transform:rotate(0)}50%{transform:rotate(-11deg)}}
+  @keyframes typeR{0%,100%{transform:rotate(-11deg)}50%{transform:rotate(0)}}
+  @keyframes scroll{from{transform:translateY(0)}to{transform:translateY(-60px)}}
+  @keyframes caret{0%,49%{opacity:1}50%,100%{opacity:0}}
+  @keyframes flicker{0%,100%{opacity:1}50%{opacity:.88}}
+  @keyframes steam{0%{transform:translateY(0);opacity:0}
+                   35%{opacity:.85}100%{transform:translateY(-26px);opacity:0}}
+  @keyframes sway{from{transform:rotate(-2.2deg)}to{transform:rotate(2.2deg)}}
+  @keyframes snore{0%{transform:translate(0,0) scale(.6);opacity:0}
+                   30%{opacity:.9}100%{transform:translate(16px,-30px) scale(1.15);opacity:0}}
+  @keyframes pan{0%,100%{transform:rotate(-13deg)}50%{transform:rotate(13deg)}}
+  @keyframes bobQ{from{transform:translateY(0)}to{transform:translateY(-5px)}}
+  @keyframes cheer{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+  @keyframes armUp{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(-30deg)}}
+  @keyframes fall{from{transform:translateY(-14px) rotate(0);opacity:0}
+                  20%{opacity:1}to{transform:translateY(118px) rotate(220deg);opacity:0}}
+
+  .breathe{animation:breathe 2.6s ease-in-out infinite alternate}
+  .eyes{transform-box:fill-box;transform-origin:center;animation:blink 4.6s infinite}
+  .armL{transform-box:fill-box;transform-origin:top center;animation:typeL .26s ease-in-out infinite}
+  .armR{transform-box:fill-box;transform-origin:top center;animation:typeR .26s ease-in-out infinite}
+  .scroll{animation:scroll 3.4s linear infinite}
+  .caret{animation:caret 1s step-end infinite}
+  .screen{animation:flicker 3.2s ease-in-out infinite}
+  .steam{animation:steam 2.6s ease-out infinite}
+  .steam:nth-of-type(2){animation-delay:.9s}
+  .steam:nth-of-type(3){animation-delay:1.7s}
+  .sway{transform-box:fill-box;transform-origin:center top;
+        animation:sway 3.4s ease-in-out infinite alternate}
+  .snore{animation:snore 3s ease-out infinite}
+  .snore:nth-of-type(2){animation-delay:1s}
+  .snore:nth-of-type(3){animation-delay:2s}
+  .pan{transform-box:fill-box;transform-origin:center bottom;animation:pan 3.6s ease-in-out infinite}
+  .bobq{animation:bobQ 1.4s ease-in-out infinite alternate}
+  .cheer{animation:cheer 1.1s ease-in-out infinite}
+  .armup-l{transform-box:fill-box;transform-origin:bottom center;animation:armUp 1.1s ease-in-out infinite}
+  .armup-r{transform-box:fill-box;transform-origin:bottom center;animation:armUp 1.1s ease-in-out infinite .1s}
+  .confetti rect{animation:fall 2.4s linear infinite}
+  .confetti rect:nth-child(2){animation-delay:.5s}
+  .confetti rect:nth-child(3){animation-delay:1s}
+  .confetti rect:nth-child(4){animation-delay:1.6s}
+  .confetti rect:nth-child(5){animation-delay:.25s}
+  @media (prefers-reduced-motion: reduce){*{animation:none!important}}</style>
+        <defs>
+          <linearGradient id="night" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#1d2140"/><stop offset="1" stop-color="#343a5e"/>
+          </linearGradient>
+        </defs>
+        <rect width="240" height="150" fill="url(#night)"/>
+        <circle cx="196" cy="30" r="14" fill="#f2e5b8"/>
+        <circle cx="190" cy="26" r="12" fill="#1d2140"/>
+        <g fill="#f2efe8" opacity=".75">
+          <circle cx="40" cy="22" r="1.6"/><circle cx="72" cy="14" r="1.2"/>
+          <circle cx="120" cy="26" r="1.4"/><circle cx="152" cy="12" r="1.2"/>
+          <circle cx="28" cy="52" r="1.2"/><circle cx="214" cy="62" r="1.4"/>
+        </g>
+        <rect y="126" width="240" height="24" fill="#232847"/>
+        <rect y="124" width="240" height="3" fill="#171a24"/>
+        <rect x="26" y="40" width="9" height="86" fill="#6b4a2a" stroke="#171a24" stroke-width="3"/>
+        <rect x="206" y="40" width="9" height="86" fill="#6b4a2a" stroke="#171a24" stroke-width="3"/>
+        <g class="sway">
+          <path d="M32 56 Q120 150 210 56" fill="#7fb8a0" stroke="#171a24" stroke-width="4"/>
+          
+          <!-- lying bot -->
+          <g>
+            <rect x="98" y="66" width="76" height="34" rx="15" fill="#ded5c4" stroke="#171a24" stroke-width="4"/>
+            <circle cx="134" cy="83" r="8" fill="#ff8c42" stroke="#171a24" stroke-width="3"/>
+            <rect x="170" y="76" width="26" height="14" rx="7" fill="#a89e8b" stroke="#171a24" stroke-width="3"/>
+            <rect x="56" y="52" width="46" height="40" rx="14" fill="#ded5c4" stroke="#171a24" stroke-width="4"/>
+            <rect x="62" y="62" width="34" height="16" rx="7" fill="#20243a" stroke="#171a24" stroke-width="3"/>
+            <path d="M68 70 q4 4 8 0" fill="none" stroke="#55d6ff" stroke-width="3" stroke-linecap="round"/>
+            <path d="M82 70 q4 4 8 0" fill="none" stroke="#55d6ff" stroke-width="3" stroke-linecap="round"/>
+            <!-- the antenna has flopped over: he has run down -->
+            <path d="M76 52 q-8 -10 -20 -6" fill="none" stroke="#171a24" stroke-width="5"/>
+            <circle cx="54" cy="46" r="6.5" fill="#8a6a4a" stroke="#171a24" stroke-width="3"/>
+          </g>
+          <path d="M32 56 Q120 132 210 56" fill="none" stroke="#171a24" stroke-width="12"/>
+          <path d="M32 56 Q120 132 210 56" fill="none" stroke="#6fa890" stroke-width="7"/>
+        </g>
+        <g font-family="ui-monospace,monospace" font-weight="700" fill="#f2efe8">
+          <text class="snore" x="66" y="50" font-size="13">z</text>
+          <text class="snore" x="76" y="44" font-size="16">z</text>
+          <text class="snore" x="88" y="38" font-size="19">Z</text>
+        </g>
+      </svg>

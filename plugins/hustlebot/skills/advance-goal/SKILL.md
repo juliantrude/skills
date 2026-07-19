@@ -62,7 +62,17 @@ Current week (all models): 61% used · resets Jul 18, 11pm (Europe/Berlin)
 Current week (Sonnet): 3% used · resets Jul 18, 11pm (Europe/Berlin)
 ```
 
-**Two carrier modes — detect which one you're in:**
+**Two carrier modes — decide with this test, never by intuition:**
+
+```bash
+test -x .hustle/bin/hustle-scheduler.sh && echo headless || echo loop
+```
+
+If it prints `headless`, you are in the one-shot chain and you **must** arm the
+next run before you exit — regardless of how the run appears to have started.
+The scheduler's existence is the entire test. Do not look for other scaffolding
+and do not infer the mode from the absence of a wrapper: guessing here silently
+drops the chain to the 15-minute crash fallback instead of its 2-minute pace.
 
 - **Headless one-shot chain** (invoked via `claude -p "/advance-goal"` from
   `.hustle/bin/hustle-session.sh`): each run is independent and short-lived,
