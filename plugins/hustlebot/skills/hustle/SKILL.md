@@ -38,7 +38,23 @@ before an unattended agent starts committing and pushing on its own:
 3. On Linux: check `loginctl show-user $USER --property=Linger`; if linger is
    off, tell the user the chain dies at logout and give them the
    `loginctl enable-linger $USER` command.
-4. Ask explicitly: start now?
+4. Check for a peer chain — every chain on the machine draws on the same
+   subscription, so two at once burn the budget twice as fast and race each
+   other into the session limit:
+
+   ```bash
+   .hustle/bin/hustle-session.sh --check-peers   # 0 = clear, 3 = one is working
+   ```
+
+   On exit 3 the log names the project. **Do not ignite.** Tell the user which
+   chain is working and ask whether to stop it (`systemctl --user stop
+   hustle-<their-slug>.service` plus `hustle-scheduler.sh disarm` in that
+   project) or to wait. A finished peer needs no question — the check retires
+   its leftover monitor by itself.
+
+   Headless runs make the same check and simply park for 5 minutes; only here,
+   with a human present, is it worth asking.
+5. Ask explicitly: start now?
 
 ## Phase 4 — Ignite
 
