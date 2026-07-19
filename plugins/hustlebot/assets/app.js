@@ -56,7 +56,9 @@ async function refresh(){
 
   document.getElementById('goalLog').innerHTML=(g.goal_log||[]).slice().reverse().map(
    l=>`<div>${md(l)}</div>`).join('')||'<div class="muted">no iterations yet</div>';
-  document.getElementById('log').textContent=await (await fetch('api/log')).text();
+  const logEl=document.getElementById('log');
+  logEl.textContent=await (await fetch('api/log')).text();
+  logEl.scrollTop=logEl.scrollHeight;
   document.getElementById('foot').textContent=
    'Status updated: '+(s.updated||'never')+' · Server: '+s.server_time;
  }catch(e){document.getElementById('badge').textContent='Monitor unreachable';}
