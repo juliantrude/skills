@@ -11,14 +11,19 @@
  </nav>
 
  <section id="page-home">
-  <div><span id="badge" class="badge idle">…</span><span id="stflag" class="pill"></span></div>
-  <div class="next-action" id="na" style="display:none">
-    <div class="k">Up next</div><div id="naText"></div>
+  <div><span id="badge" class="badge idle">…</span></div>
+  <div class="next-action" id="curTask">
+    <div class="k">Current task</div><div id="curTaskText"></div>
+  </div>
+  <div class="next-action alt" id="nextTask">
+    <div class="k">Next task</div><div id="nextTaskText"></div>
   </div>
   <div class="grid" id="grid"></div>
  </section>
 
  <section id="page-plan">
+  <div class="grid" id="statusGrid"></div>
+
   <div class="cols">
    <div>
     <h2>Definition of Done</h2>

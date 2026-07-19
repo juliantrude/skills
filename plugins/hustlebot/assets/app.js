@@ -9,22 +9,27 @@ async function refresh(){
     (await fetch('api/status')).json(), (await fetch('api/goal')).json()]);
   const b=document.getElementById('badge');
   b.className='badge '+s.tone; b.textContent=s.headline;
-  document.getElementById('stflag').textContent=g.status_flag?('STATUS: '+g.status_flag):'';
 
-  const na=document.getElementById('na');
-  if(g.next_action){na.style.display='';document.getElementById('naText').innerHTML=md(g.next_action);}
-  else na.style.display='none';
+  const nextUp=g.next_up||[];
+  const taskLabel=t=>t?md(t.section+' — '+t.text):'<span class="muted">–</span>';
+  document.getElementById('curTaskText').innerHTML=taskLabel(nextUp[0]);
+  document.getElementById('nextTaskText').innerHTML=taskLabel(nextUp[1]);
 
   const planPct=g.plan_total?Math.round(100*g.plan_done/g.plan_total):0;
   const cards=[
-   ['Plan progress', g.plan_done+' / '+g.plan_total+bar(planPct,'ok')],
+   ['Overall progress', g.plan_done+' / '+g.plan_total+bar(planPct,'ok')],
    ['Session budget', (s.session_pct!==''?esc(s.session_pct)+'%':'–')+bar(s.session_pct)],
    ['Weekly budget', (s.week_pct!==''?esc(s.week_pct)+'%':'–')+bar(s.week_pct)],
+  ];
+  document.getElementById('grid').innerHTML=cards.map(
+   ([k,v])=>`<div class="card"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+
+  const statusCards=[
    ['Next run', esc(s.next_run||'– none scheduled –')],
    ['Blockers', md(g.blockers||'–')],
    ['Last note', esc(s.note||'–')],
   ];
-  document.getElementById('grid').innerHTML=cards.map(
+  document.getElementById('statusGrid').innerHTML=statusCards.map(
    ([k,v])=>`<div class="card"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
 
   const dp=g.dod_total?Math.round(100*g.dod_done/g.dod_total):0;
