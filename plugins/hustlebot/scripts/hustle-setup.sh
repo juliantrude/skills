@@ -47,6 +47,22 @@ chmod +x "$HUSTLE_HOME/bin/hustle-scheduler.sh" "$HUSTLE_HOME/bin/hustle-session
 echo "*" > "$HUSTLE_HOME/.gitignore"
 
 if [ ! -f "$HUSTLE_HOME/config" ]; then
+  # Pick a free port so a second project on this host doesn't collide with
+  # (and crash-loop against) an existing monitor's fixed 8787.
+  FREE_PORT="$(python3 - <<'PY'
+import socket
+port = 8787
+while port < 8987:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            s.bind(("0.0.0.0", port))
+            print(port)
+            break
+        except OSError:
+            port += 1
+PY
+)"
   cat > "$HUSTLE_HOME/config" <<EOF
 # advance-goal loop configuration (sourced by bash, parsed by the monitor)
 HUSTLE_PROJECT="$PROJECT"
@@ -56,13 +72,14 @@ HUSTLE_EFFORT="high"
 # The loop runs unattended: without this it cannot use tools headlessly.
 # Understand what that means before flipping it — see the plugin README.
 HUSTLE_SKIP_PERMISSIONS="true"
-HUSTLE_PORT="8787"
+HUSTLE_PORT="${FREE_PORT:-8787}"
 HUSTLE_BIND="0.0.0.0"
 EOF
-  echo "wrote $HUSTLE_HOME/config"
+  echo "wrote $HUSTLE_HOME/config (port ${FREE_PORT:-8787})"
 else
   echo "kept existing $HUSTLE_HOME/config"
 fi
+CONFIGURED_PORT="$(grep -oE '^HUSTLE_PORT="?[0-9]+' "$HUSTLE_HOME/config" | grep -oE '[0-9]+$' || echo 8787)"
 
 if [ "$OS" != "Darwin" ]; then
   UNIT_DIR="$HOME/.config/systemd/user"
@@ -126,6 +143,6 @@ else
 EOF
 fi
 cat <<EOF
-  3. Watch:                          http://<this-host>:8787
+  3. Watch:                          http://<this-host>:$CONFIGURED_PORT
   Kill switch:                       $HUSTLE_HOME/bin/hustle-scheduler.sh disarm
 EOF

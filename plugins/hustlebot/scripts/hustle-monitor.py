@@ -15,7 +15,11 @@ Layout (HUSTLE_HOME = <project>/.hustle):
 import json
 import os
 import re
+import signal
+import socket
 import subprocess
+import time
+import urllib.request
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -198,6 +202,7 @@ def compute_state() -> dict:
         "tone": tone,
         "running": running,
         "phase": phase,
+        "pid": os.getpid(),
         "session_pct": st.get("session_pct", ""),
         "week_pct": st.get("week_pct", ""),
         "reset": st.get("reset", ""),
@@ -346,6 +351,64 @@ refresh(); setInterval(refresh, 5000);
 </script></body></html>"""
 
 
+def port_available(port: int) -> bool:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            s.bind((BIND, port))
+            return True
+        except OSError:
+            return False
+
+
+def probe_holder(port: int) -> dict:
+    """Ask whoever is already bound to `port` for its status via its own API."""
+    try:
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/status", timeout=1.5) as r:
+            return json.loads(r.read())
+    except Exception:
+        return {}
+
+
+def find_free_port(start: int, tries: int = 200) -> int:
+    port = start
+    for _ in range(tries):
+        if port_available(port):
+            return port
+        port += 1
+    raise RuntimeError(f"no free port found near {start}")
+
+
+def resolve_port() -> int:
+    """Arbitrate HUSTLE_PORT with whatever else already holds it.
+
+    A monitor left behind by a completed chain is stale and gets retired so
+    the port can be reclaimed; a monitor for a chain that's still working
+    keeps its port untouched and we fall back to the next free one instead
+    of fighting it for the bind (or crash-looping under systemd, as before).
+    """
+    if port_available(PORT):
+        return PORT
+
+    holder = probe_holder(PORT)
+    if holder.get("phase") == "complete" and holder.get("pid"):
+        try:
+            os.kill(int(holder["pid"]), signal.SIGTERM)
+        except Exception:
+            pass
+        for _ in range(20):
+            if port_available(PORT):
+                print(f"port {PORT} was held by a completed chain (pid {holder['pid']}) "
+                      "— retired it, claiming the port", flush=True)
+                return PORT
+            time.sleep(0.15)
+
+    fallback = find_free_port(PORT + 1)
+    print(f"port {PORT} is held by another chain (phase={holder.get('phase', 'unknown')}) "
+          f"— falling back to {fallback}", flush=True)
+    return fallback
+
+
 class Handler(BaseHTTPRequestHandler):
     def _send(self, code, body, ctype):
         data = body.encode() if isinstance(body, str) else body
@@ -373,6 +436,11 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    srv = ThreadingHTTPServer((BIND, PORT), Handler)
-    print(f"hustle monitor on http://{BIND}:{PORT}  (project: {PROJECT})", flush=True)
+    port = resolve_port()
+    try:
+        srv = ThreadingHTTPServer((BIND, port), Handler)
+    except OSError:                      # lost a race for the port; try again
+        port = find_free_port(port + 1)
+        srv = ThreadingHTTPServer((BIND, port), Handler)
+    print(f"hustle monitor on http://{BIND}:{port}  (project: {PROJECT})", flush=True)
     srv.serve_forever()
