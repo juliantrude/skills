@@ -66,8 +66,9 @@ goal is about the dashboard around them, not about the art.
 ## Plan
 
 ### Foundation
-- [ ] Add `--dev` to `hustle-setup.sh`: symlink `.hustle/bin/*` at the repo sources instead of copying, so edits to the monitor are visible on the running dashboard. Verify both modes against a scratch directory; confirm the default path is byte-identical to today's behaviour.
+- [x] Add `--dev` to `hustle-setup.sh`: symlink `.hustle/bin/*` at the repo sources instead of copying, so edits to the monitor are visible on the running dashboard. Verify both modes against a scratch directory; confirm the default path is byte-identical to today's behaviour.
 - [ ] Re-run `hustle-setup.sh --dev` against this repo so the rest of the work is visible live on `:8787`, and confirm the monitor restarts cleanly.
+- [ ] Arbitrate the monitor port instead of blindly binding `HUSTLE_PORT`. On startup, if the port is already held, read the holder's `status.json`: if that chain is still working, **do not steal the port** — fall back to the next free port, log which one was chosen, and keep running; if the holder's `phase` is `complete`, claim the port and retire the stale monitor. Also make `hustle-setup.sh` pick a free port at install time rather than always writing 8787. Verify by starting two projects against the same port in both states — a working holder and a completed one — and asserting which process ends up bound. Today a second project silently dies in a systemd restart loop with `EADDRINUSE` while the user looks at the wrong project's dashboard.
 - [ ] Split the monitor's embedded HTML into `plugins/hustlebot/assets/app.html`, `app.css`, `app.js`; add a small static-file handler to `hustle-monitor.py` and extend `hustle-setup.sh` to copy (or symlink) the whole `assets/` directory. Verify the existing single page still renders unchanged before moving on.
 
 ### Routing and pages
@@ -87,7 +88,7 @@ goal is about the dashboard around them, not about the art.
 ## Status
 
 STATUS: READY
-**Next action:** Add a `--dev` flag to `plugins/hustlebot/scripts/hustle-setup.sh` that symlinks `.hustle/bin/hustle-monitor.py`, `hustle-scheduler.sh` and `hustle-session.sh` at the repo sources instead of copying them; verify both `--dev` and the default copy mode against a scratch directory, then commit on `feat/dashboard-morepager`.
+**Next action:** Re-run `hustle-setup.sh --dev` against this repo (`.` as project dir) so the rest of the work is visible live on the dashboard, and confirm the monitor restarts cleanly (check the systemd unit / process picks up the symlinked script, and the page still loads).
 **Blockers:** none
 
 ## Budget
@@ -98,3 +99,4 @@ STATUS: READY
 ## Log
 
 - 2026-07-19 — GOAL.md created via /hustle. Avatar artwork settled beforehand over nine review rounds: pixel art was tried and abandoned (unreadable at 48x32; the outline tone collided with the background), replaced by animated SVG. Plugin renamed hustle → hustlebot (0.3.0); runtime namespace deliberately unchanged.
+- 2026-07-19 — Added `--dev` to `hustle-setup.sh`: symlinks `.hustle/bin/*` at the plugin sources instead of copying. Verified against two scratch dirs: default mode produces regular files byte-identical to the plugin source (`diff` clean on all three scripts); `--dev` mode produces symlinks resolving to the repo sources; re-running either mode on top of the other cleanly swaps symlinks↔copies. Committed as f4742dc on `feat/dashboard-morepager`.
