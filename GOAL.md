@@ -1,0 +1,100 @@
+# GOAL
+
+<!--
+  Single source of truth for the /advance-goal loop (driven headless via the
+  one-shot systemd chain, or interactively via `/loop /advance-goal`).
+  The loop reads and rewrites this file every iteration.
+-->
+
+## North star
+
+Turn the hustlebot web monitor from a single scrolling page into a small
+multi-page dashboard whose home screen is readable at a glance from across the
+room. The home screen shows only the KPIs — current status, current task, next
+task, overall progress, and session/week budget — plus an animated avatar that
+expresses the chain's state. Plan detail moves to its own page; the run log,
+which currently drowns everything else, moves to a third. The avatar artwork is
+**already finished and must not be redesigned**: six SVG scenes in
+`plugins/hustlebot/assets/`, approved by the user over nine review rounds. This
+goal is about the dashboard around them, not about the art.
+
+## Definition of Done
+
+- [ ] `http://localhost:<HUSTLE_PORT>/` serves a home screen showing all five KPIs (status, current task, next task, plan progress, session + week budget) and the state-appropriate avatar, with **no run-log text anywhere on it**
+- [ ] `/plan` serves Definition of Done, the plan sections with per-section progress, and the GOAL.md iteration history
+- [ ] `/logs` serves the full run log
+- [ ] All three pages are reachable from a persistent nav, survive a page reload (deep links work), and poll without a full-page refresh
+- [ ] Each of the six avatar states renders for its corresponding `compute_state()` tone, verified by driving the monitor against fixture data — not by reading code
+- [ ] `hustle-setup.sh --dev <project>` symlinks `.hustle/bin/*` at the repo sources instead of copying, and a plain `hustle-setup.sh <project>` still copies exactly as before (verified by running both against a scratch directory)
+- [ ] `python3 plugins/hustlebot/scripts/hustle-monitor.py` still runs on the Python standard library alone — no new dependencies, no build step
+- [ ] Fully blocked externally does **not** count as done; a blocked increment is documented in `## Log` and the loop moves to the next one
+
+## Working Agreements (read every iteration — these override convenience)
+
+**Priority order per iteration:**
+1. If the previous iteration left a broken monitor (does not start, or a page 500s), fixing that comes before anything else.
+2. Then take the next unchecked increment from `## Plan`.
+
+**Git workflow:**
+- Work on the branch `feat/dashboard-morepager`, branched from `main`. Create it if missing; never commit to `main`.
+- **Never push.** No `git push`, no PR, no remote operation of any kind. The user reviews locally and merges by hand. This is a public repository and the loop runs unattended.
+- One commit per completed increment. Message: what changed and why, not a restatement of the diff.
+- Do not commit until the increment is verified per the bar below.
+
+**Verification bar (this is where the last effort went wrong — do not skip):**
+- A structural check is not a verification. Starting the monitor and reading its source proves nothing about what a user sees.
+- Before checking off any increment that touches a page, **start the monitor and fetch the affected route**, then assert on the returned markup — that the KPI is present, that the log is absent from the home screen, that the nav links resolve.
+- For anything visual, render it and look at it. `plugins/hustlebot/assets/*.svg` can be rasterised with `convert in.svg out.png` and read back as an image. Note that ImageMagick silently drops elements carrying `<animate>` children and does not support `clipPath`, `<use>` or CSS animation — strip SMIL and hardcode the pose before rendering, or you will diagnose tool artefacts as bugs.
+- If an increment cannot be verified, say so in `## Log` and leave the box unchecked rather than claiming it.
+
+**Out-of-scope systems — never modify:**
+- `plugins/hustlebot/assets/*.svg` — the avatar artwork is signed off. If a state genuinely cannot be wired up without an art change, document it in `## Log` and leave the increment blocked; do not redraw it.
+- `hustle-session.sh`, `hustle-scheduler.sh` — the scheduling chain is working and orthogonal to this goal. `hustle-setup.sh` may be touched **only** for the `--dev` flag.
+- The runtime namespace: `.hustle/`, the `HUSTLE_*` config keys, and the `hustle-<slug>` service names stay exactly as they are. Renaming them breaks every existing installation.
+- Anything under `.hustle/` in this repo is local runtime state, not source. Never commit it.
+
+**Etiquette:**
+- Comments explain why, never what. No comment that restates the line below it.
+- Dashboard copy is English (the UI is already English); `GOAL.md` log lines are English too.
+- Never claim a state you did not observe. "Rendered and checked" and "should work" are different sentences.
+
+**References:**
+- `plugins/hustlebot/scripts/hustle-monitor.py` — current single-page monitor; `compute_state()` is the authority on which states exist.
+- `plugins/hustlebot/assets/` — the six approved avatar scenes: `working`, `idle`, `waiting`, `sleeping`, `searching`, `done`.
+- `GOAL.md` parsing lives in `parse_goal()`; the format contract is in `plugins/hustlebot/skills/grill-goal/SKILL.md`.
+
+## Plan
+
+### Foundation
+- [ ] Add `--dev` to `hustle-setup.sh`: symlink `.hustle/bin/*` at the repo sources instead of copying, so edits to the monitor are visible on the running dashboard. Verify both modes against a scratch directory; confirm the default path is byte-identical to today's behaviour.
+- [ ] Re-run `hustle-setup.sh --dev` against this repo so the rest of the work is visible live on `:8787`, and confirm the monitor restarts cleanly.
+- [ ] Split the monitor's embedded HTML into `plugins/hustlebot/assets/app.html`, `app.css`, `app.js`; add a small static-file handler to `hustle-monitor.py` and extend `hustle-setup.sh` to copy (or symlink) the whole `assets/` directory. Verify the existing single page still renders unchanged before moving on.
+
+### Routing and pages
+- [ ] Add hash-based routing (`#/`, `#/plan`, `#/logs`) with a persistent nav, so a reload lands on the same page. No server-side route changes; the existing `/api/*` endpoints stay as they are.
+- [ ] Build the **home** screen: status headline, current task, next task, overall plan progress, session and week budget. No log output on this page at all.
+- [ ] Build the **plan** page: DoD donut, plan sections with per-section progress, iteration history from `## Log`.
+- [ ] Build the **logs** page: the full run log, with the newest lines visible without scrolling.
+
+### Avatar
+- [ ] Map `compute_state()`'s tones onto the six scenes (`run`→working, `wait`→waiting, `hold`→sleeping, `done`→done, `idle`→idle, unreachable→searching), and decide what `warn`/`blocked`/`not_ready` show — reuse an existing scene rather than commissioning new art.
+- [ ] Embed the avatar on the home screen so the scene follows the live status, including the browser-side "monitor unreachable" case which no server response can report.
+- [ ] Drive the monitor against fixture `status.json` files covering every state, and confirm by rendering that each one shows its intended scene.
+
+### Closeout
+- [ ] Final sweep: everything at spec or documented-blocked; DoD checkboxes above updated; no stray files from the abandoned pixel-art approach remain.
+
+## Status
+
+STATUS: READY
+**Next action:** Add a `--dev` flag to `plugins/hustlebot/scripts/hustle-setup.sh` that symlinks `.hustle/bin/hustle-monitor.py`, `hustle-scheduler.sh` and `hustle-session.sh` at the repo sources instead of copying them; verify both `--dev` and the default copy mode against a scratch directory, then commit on `feat/dashboard-morepager`.
+**Blockers:** none
+
+## Budget
+
+- session pause threshold: 85%
+- weekly pause threshold: 90%
+
+## Log
+
+- 2026-07-19 — GOAL.md created via /hustle. Avatar artwork settled beforehand over nine review rounds: pixel art was tried and abandoned (unreadable at 48x32; the outline tone collided with the background), replaced by animated SVG. Plugin renamed hustle → hustlebot (0.3.0); runtime namespace deliberately unchanged.
