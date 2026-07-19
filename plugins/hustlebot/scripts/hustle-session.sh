@@ -34,59 +34,92 @@ log(){ echo "$(date '+%Y-%m-%dT%H:%M:%S%z') $*" >> "$LOG"; }
 #
 # Peers are discovered from their own files rather than a shared registry: a
 # registry outlives the crashes it is supposed to describe, and stale entries
-# are exactly the failure we are trying to avoid. run.pid answers "is it
-# working", status.json answers "is it finished" — both already exist.
+# are exactly the failure we are trying to avoid.
+#
+# Two generations are recognised. Chains installed before the hustlebot rename
+# use different unit names, a different script path and a different state file,
+# and an unrecognised peer is worse than no check at all -- it is a chain that
+# keeps working while this one assumes the machine is idle.
+#
+#   generation   session unit          session script                         state file
+#   hustlebot    hustle-<slug>         <proj>/.hustle/bin/hustle-session.sh   .hustle/status.json
+#   legacy       advance-goal          <proj>/scripts/advance-goal-session.sh .advance-goal-status.json
+#
 # list-unit-files, not list-units: an idle chain's oneshot unit is not loaded
-# between runs, so list-units would only ever report chains that happen to be
-# awake. The monitor units are skipped — their ExecStart is the interpreter,
-# not the project.
-peer_homes() {
-  systemctl --user list-unit-files 'hustle-*.service' --no-legend --no-pager 2>/dev/null \
-    | awk '{print $1}' | grep -v '^hustle-monitor-' | while read -r unit; do
-        systemctl --user show "$unit" -p ExecStart --value 2>/dev/null \
-          | grep -oE 'path=[^ ;]+' | cut -d= -f2- | sed -n 's#/bin/hustle-session\.sh$##p'
-      done | sort -u | grep -v "^${HUSTLE_HOME}$"
+# between runs, so list-units only ever reports chains that happen to be awake.
+# Monitor units are skipped -- their ExecStart is the interpreter, not a project.
+peer_chains() {
+  systemctl --user list-unit-files 'hustle-*.service' 'advance-goal*.service' \
+            --no-legend --no-pager 2>/dev/null \
+    | awk '{print $1}' | grep -vE '^(hustle-monitor-|advance-goal-monitor)' | while read -r unit; do
+        local exec_path root
+        exec_path="$(systemctl --user show "$unit" -p ExecStart --value 2>/dev/null \
+                     | grep -oE 'path=[^ ;]+' | head -1 | cut -d= -f2-)"
+        case "$exec_path" in
+          */.hustle/bin/hustle-session.sh)
+            root="${exec_path%/.hustle/bin/hustle-session.sh}"
+            printf '%s\t%s\t%s\t%s\n' "$unit" "$root" \
+                   "$root/.hustle/status.json" "$root/.hustle/run.pid" ;;
+          */scripts/advance-goal-session.sh)
+            root="${exec_path%/scripts/advance-goal-session.sh}"
+            printf '%s\t%s\t%s\t%s\n' "$unit" "$root" \
+                   "$root/.advance-goal-status.json" "$root/.advance-goal-run.pid" ;;
+        esac
+      done | grep -v "	${HUSTLE_PROJECT}	"
 }
 
 peer_phase() {
-  sed -n 's/.*"phase"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$1/status.json" 2>/dev/null | head -1
+  sed -n 's/.*"phase"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$1" 2>/dev/null | head -1
 }
 
+# A run is in progress if its pid file points at a live process, or -- for any
+# systemd-driven chain, whatever its layout -- if the session unit is active.
+# The unit check is what makes this work for generations that have no pid file.
 peer_running() {
-  local pid; pid="$(cat "$1/run.pid" 2>/dev/null)" || return 1
-  [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null
+  local pidfile="$1" unit="$2" pid
+  pid="$(cat "$pidfile" 2>/dev/null)"
+  if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then return 0; fi
+  [ "$(systemctl --user is-active "$unit" 2>/dev/null)" = "active" ]
 }
 
 # Retire what a finished chain left behind: its monitor keeps holding a port
 # long after the work is done (that is how a stale dashboard ends up being the
 # one you are looking at).
 retire_peer() {
-  local home="$1" slug mpid
-  slug="$(sed -n 's/^HUSTLE_SLUG="\(.*\)"$/\1/p' "$home/config" 2>/dev/null | head -1)"
-  [ -n "$slug" ] && systemctl --user stop "hustle-monitor-${slug}.service" >/dev/null 2>&1
-  mpid="$(cat "$home/monitor.pid" 2>/dev/null)"
-  [ -n "$mpid" ] && kill -0 "$mpid" 2>/dev/null && kill "$mpid" 2>/dev/null
-  # monitor.pid records the pid at launch and goes stale the moment systemd
+  local unit="$1" root="$2" monitor_unit
+  case "$unit" in
+    hustle-*)       monitor_unit="hustle-monitor-${unit#hustle-}" ;;
+    advance-goal.*) monitor_unit="advance-goal-monitor.service" ;;
+    *)              monitor_unit="" ;;
+  esac
+  [ -n "$monitor_unit" ] && systemctl --user stop "$monitor_unit" >/dev/null 2>&1
+  # A pid file records the pid at launch and goes stale the moment systemd
   # restarts the unit, so match on the path the process was started from too.
-  # Scoped to that project's own bin directory: it cannot hit anyone else.
-  pkill -f "^python3 ${home}/bin/hustle-monitor\.py" 2>/dev/null
+  # Both patterns are anchored inside that project, so they cannot hit anyone else.
+  pkill -f "^python3 ${root}/.hustle/bin/hustle-monitor\.py" 2>/dev/null
+  pkill -f "^python3 ${root}/scripts/advance-goal-monitor\.py" 2>/dev/null
   return 0
 }
 
-# 0 = clear to run, 3 = a peer is actively working.
+# 0 = clear to run, 3 = a peer is actively working. Units whose project is gone
+# are reported, never removed: an unmounted disk looks exactly like a deleted
+# project, and an unattended run must not delete someone else's setup over it.
 check_peers() {
-  local home phase blocked=0
-  while read -r home; do
-    [ -n "$home" ] && [ -d "$home" ] || continue
-    phase="$(peer_phase "$home")"
-    if peer_running "$home"; then
-      log "[peer] active chain in ${home%/.hustle} — yielding"
-      blocked=1
-    elif [ "$phase" = "complete" ]; then
-      log "[peer] finished chain in ${home%/.hustle} — retiring its leftovers"
-      retire_peer "$home"
+  local unit root state pidfile blocked=0
+  while IFS="$(printf '\t')" read -r unit root state pidfile; do
+    [ -n "$root" ] || continue
+    if [ ! -d "$root" ]; then
+      log "[peer] stale unit ${unit} -> ${root} (project is gone; remove with: hustle-setup.sh --uninstall ${root})"
+      continue
     fi
-  done < <(peer_homes)
+    if peer_running "$pidfile" "$unit"; then
+      log "[peer] active chain in ${root} — yielding"
+      blocked=1
+    elif [ "$(peer_phase "$state")" = "complete" ]; then
+      log "[peer] finished chain in ${root} — retiring its leftovers"
+      retire_peer "$unit" "$root"
+    fi
+  done < <(peer_chains)
   [ "$blocked" -eq 0 ] || return 3
 }
 

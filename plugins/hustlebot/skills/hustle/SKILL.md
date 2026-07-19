@@ -54,6 +54,12 @@ before an unattended agent starts committing and pushing on its own:
 
    Headless runs make the same check and simply park for 5 minutes; only here,
    with a human present, is it worth asking.
+
+   The same check logs `[peer] stale unit …` for any chain whose project
+   directory is gone. Surface those to the user with the `hustle-setup.sh
+   --uninstall <path>` line from the log — but never run it for them
+   unasked: an unmounted disk is indistinguishable from a deleted project,
+   and the units may belong to work they still want.
 5. Ask explicitly: start now?
 
 ## Phase 4 — Ignite

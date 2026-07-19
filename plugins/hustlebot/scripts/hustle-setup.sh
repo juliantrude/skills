@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Install the hustle loop into a project.
 #
-#   hustle-setup.sh [--dev] [project-dir]     (default: current directory)
+#   hustle-setup.sh [--dev] [project-dir]        (default: current directory)
+#   hustle-setup.sh --uninstall [project-dir]    remove the scheduling units
 #
 # Creates <project>/.hustle/ with the runtime scripts, a config file and
 # (on Linux) the systemd user service. Idempotent: re-running refreshes the
@@ -13,19 +14,55 @@
 set -euo pipefail
 
 DEV_MODE=false
+UNINSTALL=false
 ARGS=()
 for arg in "$@"; do
   case "$arg" in
     --dev) DEV_MODE=true ;;
+    --uninstall) UNINSTALL=true ;;
     *) ARGS+=("$arg") ;;
   esac
 done
 
-PROJECT="$(cd "${ARGS[0]:-$PWD}" && pwd)"
+if [ "$UNINSTALL" = true ]; then
+  RAW="${ARGS[0]:-$PWD}"
+  PROJECT="$(cd "$RAW" 2>/dev/null && pwd || echo "${RAW%/}")"
+else
+  PROJECT="$(cd "${ARGS[0]:-$PWD}" && pwd)"
+fi
 PLUGIN_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 HUSTLE_HOME="$PROJECT/.hustle"
 SLUG="$(basename "$PROJECT" | tr -cs 'a-zA-Z0-9' '-' | sed 's/^-//;s/-$//')"
 OS="$(uname -s)"
+
+# --- uninstall --------------------------------------------------------------
+# The missing counterpart to installation. Without it every throwaway project
+# -- including the scratch directories used to verify this very script --
+# leaves systemd units behind that point at a path which no longer exists.
+# Project files are left alone: this removes the scheduling, not the work.
+if [ "$UNINSTALL" = true ]; then
+  UNIT_DIR="$HOME/.config/systemd/user"
+  removed=0
+  for unit in "hustle-${SLUG}.service" "hustle-${SLUG}-next.timer" "hustle-monitor-${SLUG}.service"; do
+    if [ -e "$UNIT_DIR/$unit" ] || systemctl --user cat "$unit" >/dev/null 2>&1; then
+      systemctl --user disable --now "$unit" >/dev/null 2>&1 || true
+      rm -f "$UNIT_DIR/$unit"
+      echo "removed $unit"
+      removed=$((removed + 1))
+    fi
+  done
+  [ -d "$PROJECT/.hustle" ] && pkill -f "^python3 ${PROJECT}/.hustle/bin/hustle-monitor\.py" 2>/dev/null
+  systemctl --user daemon-reload 2>/dev/null || true
+  systemctl --user reset-failed 2>/dev/null || true
+  if [ "$removed" -eq 0 ]; then
+    echo "no units found for slug '${SLUG}' (project: $PROJECT)"
+  else
+    echo
+    echo "uninstalled the chain for: $PROJECT"
+    echo "  $PROJECT/.hustle/ and GOAL.md were left untouched — delete them yourself if you want them gone."
+  fi
+  exit 0
+fi
 
 command -v python3 >/dev/null || { echo "error: python3 is required (macOS: xcode-select --install)"; exit 1; }
 command -v claude  >/dev/null || { echo "error: claude CLI not found in PATH"; exit 1; }
@@ -115,6 +152,11 @@ ExecStart=$HUSTLE_HOME/bin/hustle-session.sh
 TimeoutStartSec=7200
 EOF
   systemctl --user daemon-reload
+  # Enable the monitor so it also comes up at login, not only when a run pulls
+  # it in via Wants=. Once the goal is reached no run ever fires again, and an
+  # un-enabled monitor would take the finished dashboard down with the next
+  # reboot -- exactly the result you most want to still be able to look at.
+  systemctl --user enable "hustle-monitor-${SLUG}.service" >/dev/null 2>&1 || true
   echo "wrote systemd units hustle-${SLUG}.service + hustle-monitor-${SLUG}.service"
 fi
 
