@@ -182,6 +182,21 @@ def parse_goal() -> dict:
     }
 
 
+# One svg per tone compute_state() can produce. "warn" (blocked / not_ready /
+# stopped) has no dedicated art — it reuses "searching", the same scene the
+# browser falls back to when it can't reach the monitor at all, since both
+# mean "something needs a human's attention" and the two can never be shown
+# at once (an unreachable monitor can't report a tone in the first place).
+SCENE_BY_TONE = {
+    "run": "working",
+    "wait": "waiting",
+    "hold": "sleeping",
+    "done": "done",
+    "idle": "idle",
+    "warn": "searching",
+}
+
+
 def compute_state() -> dict:
     running = run_active()
     st = read_status_json()
@@ -208,6 +223,7 @@ def compute_state() -> dict:
     return {
         "headline": headline,
         "tone": tone,
+        "scene": SCENE_BY_TONE[tone],
         "running": running,
         "phase": phase,
         "pid": os.getpid(),
