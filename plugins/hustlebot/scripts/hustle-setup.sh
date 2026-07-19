@@ -32,14 +32,17 @@ command -v claude  >/dev/null || { echo "error: claude CLI not found in PATH"; e
 
 mkdir -p "$HUSTLE_HOME/bin"
 rm -f "$HUSTLE_HOME/bin/hustle-scheduler.sh" "$HUSTLE_HOME/bin/hustle-session.sh" "$HUSTLE_HOME/bin/hustle-monitor.py"
+rm -rf "$HUSTLE_HOME/assets"
 if [ "$DEV_MODE" = true ]; then
   ln -s "$PLUGIN_DIR/scripts/hustle-scheduler.sh" "$HUSTLE_HOME/bin/hustle-scheduler.sh"
   ln -s "$PLUGIN_DIR/scripts/hustle-session.sh" "$HUSTLE_HOME/bin/hustle-session.sh"
   ln -s "$PLUGIN_DIR/scripts/hustle-monitor.py" "$HUSTLE_HOME/bin/hustle-monitor.py"
-  echo "dev mode: symlinked .hustle/bin/* at $PLUGIN_DIR/scripts"
+  ln -s "$PLUGIN_DIR/assets" "$HUSTLE_HOME/assets"
+  echo "dev mode: symlinked .hustle/bin/* and .hustle/assets at $PLUGIN_DIR"
 else
   cp "$PLUGIN_DIR/scripts/hustle-scheduler.sh" "$PLUGIN_DIR/scripts/hustle-session.sh" \
      "$PLUGIN_DIR/scripts/hustle-monitor.py" "$HUSTLE_HOME/bin/"
+  cp -r "$PLUGIN_DIR/assets" "$HUSTLE_HOME/assets"
 fi
 chmod +x "$HUSTLE_HOME/bin/hustle-scheduler.sh" "$HUSTLE_HOME/bin/hustle-session.sh" "$HUSTLE_HOME/bin/hustle-monitor.py"
 
