@@ -20,7 +20,7 @@ from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-HUSTLE_HOME = Path(os.environ.get("HUSTLE_HOME", Path(__file__).resolve().parents[1]))
+HUSTLE_HOME = Path(os.environ.get("HUSTLE_HOME", Path(__file__).absolute().parents[1]))
 
 
 def read_config() -> dict:
