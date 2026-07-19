@@ -4,30 +4,44 @@
 <link rel="stylesheet" href="app.css">
 </head><body><div class="wrap">
  <h1>hustle monitor</h1>
- <div><span id="badge" class="badge idle">…</span><span id="stflag" class="pill"></span></div>
- <div class="next-action" id="na" style="display:none">
-   <div class="k">Up next</div><div id="naText"></div>
- </div>
- <div class="grid" id="grid"></div>
+ <nav class="nav" id="nav">
+  <a href="#/" data-route="/">Home</a>
+  <a href="#/plan" data-route="/plan">Plan</a>
+  <a href="#/logs" data-route="/logs">Logs</a>
+ </nav>
 
- <div class="cols">
-  <div>
-   <h2>Definition of Done</h2>
-   <div class="donutwrap">
-     <div class="donut" id="donut"><div id="donutPct">–</div></div>
-     <ul class="check" id="dodList"></ul>
+ <section id="page-home">
+  <div><span id="badge" class="badge idle">…</span><span id="stflag" class="pill"></span></div>
+  <div class="next-action" id="na" style="display:none">
+    <div class="k">Up next</div><div id="naText"></div>
+  </div>
+  <div class="grid" id="grid"></div>
+ </section>
+
+ <section id="page-plan">
+  <div class="cols">
+   <div>
+    <h2>Definition of Done</h2>
+    <div class="donutwrap">
+      <div class="donut" id="donut"><div id="donutPct">–</div></div>
+      <ul class="check" id="dodList"></ul>
+    </div>
+   </div>
+   <div>
+    <h2>Plan <span class="muted" id="planTotal"></span></h2>
+    <div id="plan"></div>
    </div>
   </div>
-  <div>
-   <h2>Plan <span class="muted" id="planTotal"></span></h2>
-   <div id="plan"></div>
-  </div>
- </div>
 
- <h2>Iteration history (GOAL.md)</h2>
- <div class="goal-log" id="goalLog"></div>
- <h2>Log</h2>
- <pre id="log">…</pre>
+  <h2>Iteration history (GOAL.md)</h2>
+  <div class="goal-log" id="goalLog"></div>
+ </section>
+
+ <section id="page-logs">
+  <h2>Log</h2>
+  <pre id="log">…</pre>
+ </section>
+
  <div class="muted" id="foot"></div>
 </div>
 <script src="app.js"></script>

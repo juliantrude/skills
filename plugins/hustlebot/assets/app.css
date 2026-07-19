@@ -2,6 +2,10 @@
 body{font:15px/1.5 system-ui,sans-serif;margin:0;background:#0f1115;color:#e6e6e6}
 .wrap{max-width:1080px;margin:0 auto;padding:24px}
 h1{font-size:15px;font-weight:600;color:#8a94a6;letter-spacing:.04em;text-transform:uppercase;margin:0 0 16px}
+.nav{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid #232833}
+.nav a{color:#8a94a6;text-decoration:none;font-size:13px;font-weight:600;padding:8px 14px;border-bottom:2px solid transparent}
+.nav a.active{color:#e6e6e6;border-bottom-color:#5ab0f0}
+.nav a:hover{color:#c8d0dc}
 h2{font-size:12px;font-weight:600;color:#8a94a6;letter-spacing:.04em;text-transform:uppercase;margin:26px 0 10px}
 .badge{display:inline-block;padding:10px 16px;border-radius:10px;font-size:20px;font-weight:600;margin:0 8px 18px 0}
 .run{background:#12351f;color:#5ee08a} .hold{background:#3a2a10;color:#f0b74d}

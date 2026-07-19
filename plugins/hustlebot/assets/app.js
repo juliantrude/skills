@@ -56,4 +56,17 @@ async function refresh(){
    'Status updated: '+(s.updated||'never')+' · Server: '+s.server_time;
  }catch(e){document.getElementById('badge').textContent='Monitor unreachable';}
 }
+const ROUTES=['/','/plan','/logs'];
+function route(){
+ let r=(location.hash||'#/').slice(1);
+ if(!ROUTES.includes(r))r='/';
+ document.getElementById('page-home').style.display=r==='/'?'':'none';
+ document.getElementById('page-plan').style.display=r==='/plan'?'':'none';
+ document.getElementById('page-logs').style.display=r==='/logs'?'':'none';
+ document.querySelectorAll('#nav a').forEach(
+  a=>a.classList.toggle('active',a.dataset.route===r));
+}
+window.addEventListener('hashchange', route);
+route();
+
 refresh(); setInterval(refresh, 5000);
