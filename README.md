@@ -22,8 +22,7 @@ GOAL.md  ←→  /advance-goal (skill, 1 increment per run)
                  └── hustle-monitor.py     web dashboard on :8787 (zero tokens)
 ```
 
-<img width="1802" height="1050" alt="image" src="https://github.com/user-attachments/assets/8e2b16f6-6456-4f18-ae56-a7e918c4b607" />
-
+<img width="1157" height="432" alt="image" src="https://github.com/user-attachments/assets/9ca64b72-88f0-4aef-a9ca-3bab88d457b3" />
 
 ## Install
 
