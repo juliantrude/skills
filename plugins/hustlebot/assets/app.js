@@ -9,6 +9,8 @@ async function refresh(){
     (await fetch('api/status')).json(), (await fetch('api/goal')).json()]);
   const b=document.getElementById('badge');
   b.className='badge '+s.tone; b.textContent=s.headline;
+  const avatar=document.getElementById('avatar');
+  avatar.src=s.scene+'.svg'; avatar.alt=s.headline;
 
   const nextUp=g.next_up||[];
   const taskLabel=t=>t?md(t.section+' — '+t.text):'<span class="muted">–</span>';
@@ -61,7 +63,11 @@ async function refresh(){
   logEl.scrollTop=logEl.scrollHeight;
   document.getElementById('foot').textContent=
    'Status updated: '+(s.updated||'never')+' · Server: '+s.server_time;
- }catch(e){document.getElementById('badge').textContent='Monitor unreachable';}
+ }catch(e){
+  document.getElementById('badge').textContent='Monitor unreachable';
+  const avatar=document.getElementById('avatar');
+  avatar.src='searching.svg'; avatar.alt='Monitor unreachable';
+ }
 }
 const ROUTES=['/','/plan','/logs'];
 function route(){
